@@ -143,7 +143,7 @@ class Trajectory:
 
 class LinearTrajectory(Trajectory):
 
-    def __init__(self):
+    def __init__(self, total_time, start_pose, end_pose):
         """
         Remember to call the constructor of Trajectory
 
@@ -151,8 +151,9 @@ class LinearTrajectory(Trajectory):
         ----------
         ????? You're going to have to fill these in how you see fit
         """
-        pass
-        # Trajectory.__init__(self, ...)
+        self.start_pose = np.array(start_pose)
+        self.end_pose = np.array(end_pose)
+        Trajectory.__init__(self, total_time)
 
     def target_pose(self, time):
         """
@@ -174,7 +175,13 @@ class LinearTrajectory(Trajectory):
         7x' :obj:`numpy.ndarray`
             desired configuration in workspace coordinates of the end effector
         """
-        pass
+        mid_pose = self.start_pose + (self.end_pose - self.start_pose) / 2
+        if time < self.total_time/2:
+            frac = (time / (self.total_time / 2)) ** 2
+            return self.start_pose + (mid_pose - self.start_pose)  * frac 
+        else:
+            frac = ((self.total_time - time) / (self.total_time / 2)) ** 2
+            return self.end_pose + (mid_pose - self.end_pose)  * frac 
 
     def target_velocity(self, time):
         """
@@ -191,7 +198,7 @@ class LinearTrajectory(Trajectory):
         6x' :obj:`numpy.ndarray`
             desired body-frame velocity of the end effector
         """
-        pass
+        return [-4,0,0,0,0,0]
 
 class CircularTrajectory(Trajectory):
 
@@ -203,8 +210,9 @@ class CircularTrajectory(Trajectory):
         ----------
         ????? You're going to have to fill these in how you see fit
         """
-        pass
-        # Trajectory.__init__(self, ...)
+        Trajectory.__init__(self, total_time)
+        self.center_position = center_position
+        self.radius = radius
 
     def target_pose(self, time):
         """
@@ -226,7 +234,16 @@ class CircularTrajectory(Trajectory):
         7x' :obj:`numpy.ndarray`
             desired configuration in workspace coordinates of the end effector
         """
-        pass
+        if time < self.total_time/2:
+            frac = (time / (self.total_time / 2)) ** 2
+            theta = np.pi  * frac 
+        else:
+            frac = ((self.total_time - time) / (self.total_time / 2)) ** 2
+            theta = np.pi + np.pi*(1-frac)
+
+        x = np.cos(theta) * self.radius + self.center_position[0]
+        y =  np.sin(theta) * self.radius + self.center_position[1]
+        return [x, y, 0, 0, 1, 0, 0]
 
     def target_velocity(self, time):
         """
@@ -256,8 +273,9 @@ class PolygonalTrajectory(Trajectory):
         ????? You're going to have to fill these in how you see fit
 
         """
-        pass
-        # Trajectory.__init__(self, total_time)
+        Trajectory.__init__(self, total_time)
+        self.lines = [LinearTrajectory(total_time/len(points), points[i-1], points[i]) for i in range(1,len(points))]
+        self.lines.append(LinearTrajectory(total_time/len(points), points[-1], points[0]))
 
     def target_pose(self, time):
         """
@@ -279,7 +297,8 @@ class PolygonalTrajectory(Trajectory):
         7x' :obj:`numpy.ndarray`
             desired configuration in workspace coordinates of the end effector
         """
-        pass
+        index = int(time // (self.total_time/len(self.lines)))
+        return self.lines[index].target_pose(time % (self.total_time/len(self.lines)))
         
     def target_velocity(self, time):
         """

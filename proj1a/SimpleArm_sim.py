@@ -243,11 +243,22 @@ def define_trajectories(args):
     """ Define each type of trajectory with the appropriate parameters."""
     trajectory = None
     if args.task == 'line':
-        trajectory = LinearTrajectory()
+        trajectory = LinearTrajectory(
+            args.total_time, 
+            [float(v) for v in args.start_pose.split(',')],
+            [float(v) for v in args.end_pose.split(',')]
+        )
     elif args.task == 'circle':
-        trajectory = CircularTrajectory()
+        trajectory = CircularTrajectory(
+            [float(v) for v in args.center_pos.split(',')],
+            args.radius,
+            args.total_time
+        )
     elif args.task == 'polygon':
-        trajectory = PolygonalTrajectory()
+        trajectory = PolygonalTrajectory(
+            [[float(v) for v in point.split(',')] for point in args.points.split(' ')],
+            args.total_time
+        )
     return trajectory
 
 if __name__ == "__main__":
@@ -258,6 +269,16 @@ if __name__ == "__main__":
     parser.add_argument('-controller_name', '-c', type=str, default='jointspace', 
         help='Options: jointspace, workspace, or torque.  Default: jointspace'
     )
+    parser.add_argument('--start_pose', '-s', type=str, default='0,3,0,0,1,0,0')
+    parser.add_argument('--end_pose', '-e', type=str, default='0,7,0,0,1,0,0')
+    parser.add_argument('--total_time', '-tt', type=float, default='5.0')
+
+    parser.add_argument('--center_pos', '-cp', type=str, default='6,6,0,0,1,0,0')
+    parser.add_argument('--radius', '-r', type=float, default='3.0')
+
+
+    parser.add_argument('--points', '-p', type=str, default='-6,-6,0,0,1,0,0 6,-6,0,0,1,0,0 6,6,0,0,1,0,0 -6,6,0,0,1,0,0')
+
     args = parser.parse_args()
 
     # Width and height in pixels of simulator. Adjust as needed

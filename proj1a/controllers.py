@@ -88,7 +88,28 @@ class WorkspaceVelocityController(Controller):
         ----------
         desired control input (joint velocities or torques) : (2,) numpy array
         """
-        pass
+        theta1, theta2 = self.sim.q[0], self.sim.q[1]
+
+        l1, l2 = self.sim.l1, self.sim.l2
+
+        J_b = np.array([
+            [-(l1*np.sin(theta1) + l2*np.sin(theta1+theta2)), -(l2*np.sin(theta1+theta2))],
+            [-(-l1*np.cos(theta1) - l2*np.cos(theta1+theta2)), -(-l2*np.cos(theta1+theta2))],
+            [0,0],
+            [0,0],
+            [0,0],
+            [1,1]
+        ])
+        vel = np.array([
+            target_velocity[0],
+            target_velocity[1],
+            0,
+            0,
+            0,
+            0
+        ])
+        # import pdb; pdb.set_trace()
+        return np.linalg.pinv(J_b)@vel
 
 
 class JointTorqueController(Controller):
