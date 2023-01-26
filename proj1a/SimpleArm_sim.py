@@ -8,6 +8,7 @@ from trajectories import LinearTrajectory, CircularTrajectory, PolygonalTrajecto
 from controllers import JointVelocityController, JointTorqueController, WorkspaceVelocityController
 import colorsys
 import argparse
+import os
 
 """
 2DOF manipulator simulation. Used for testing controllers and paths
@@ -278,6 +279,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--points', '-p', type=str, default='2,2,0,0,1,0,0 2,4,0,0,1,0,0 4,4,0,0,1,0,0 4,2,0,0,1,0,0')
 
+    parser.add_argument('--save_dir', '-sd', type=str, default=None)
     args = parser.parse_args()
 
     # Width and height in pixels of simulator. Adjust as needed
@@ -303,6 +305,11 @@ if __name__ == "__main__":
         elif args.controller_name == 'torque':
             update_func = sim.update_dynamic
 
+        if args.save_dir is not None:
+            save_folder = f'{args.save_dir}/{args.controller_name}_{args.task}'
+            if not os.path.exists(save_folder):
+                os.mkdir(save_folder)
+
         while(sim.time < trajectory.total_time):
             # Integrate the dynamics
             update_func()
@@ -315,4 +322,8 @@ if __name__ == "__main__":
             # Wait until finshed with dt if needed
             delta_time = pyglet.clock.tick()
             time_left = max(sim.dt - delta_time, 0)
-            sleep(time_left)
+            
+            # Save
+            pyglet.image.get_buffer_manager().get_color_buffer().save(f'{save_folder}/{sim.time}.png')
+            
+            
