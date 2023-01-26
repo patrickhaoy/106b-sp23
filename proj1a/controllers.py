@@ -88,28 +88,9 @@ class WorkspaceVelocityController(Controller):
         ----------
         desired control input (joint velocities or torques) : (2,) numpy array
         """
-        theta1, theta2 = self.sim.q[0], self.sim.q[1]
-
-        l1, l2 = self.sim.l1, self.sim.l2
-
-        J_b = np.array([
-            [-(l1*np.sin(theta1) + l2*np.sin(theta1+theta2)), -(l2*np.sin(theta1+theta2))],
-            [-(-l1*np.cos(theta1) - l2*np.cos(theta1+theta2)), -(-l2*np.cos(theta1+theta2))],
-            [0,0],
-            [0,0],
-            [0,0],
-            [1,1]
-        ])
-        vel = np.array([
-            target_velocity[0],
-            target_velocity[1],
-            0,
-            0,
-            0,
-            0
-        ])
-        # import pdb; pdb.set_trace()
-        return np.linalg.pinv(J_b)@vel
+        J = self.sim.J_body_func(self.sim.q, self.sim.q_dot)
+        result = np.linalg.pinv(J)@target_velocity
+        return result
 
 
 class JointTorqueController(Controller):
@@ -139,4 +120,9 @@ class JointTorqueController(Controller):
         ----------
         desired control input (joint velocities or torques) : (2,) numpy array
         """
-        pass
+        M = self.sim.M_func(self.sim.q, self.sim.q_dot)
+        C = self.sim.C_func(self.sim.q, self.sim.q_dot)
+        G = self.sim.G_func(self.sim.q, self.sim.q_dot)
+
+        result = (M@target_acceleration).reshape(-1) + (C@self.sim.q_dot).reshape(-1) + G.reshape(-1)
+        return result.reshape(-1,1)

@@ -220,9 +220,9 @@ class SimpleArmSim(pyglet.window.Window):
             safe_index = lambda i: max(min(i, len(self.joint_acceleration_sols) - 1), 0)
             target_acceleration = self.joint_acceleration_sols[safe_index(index)]
             joint_torque = controller.step_control(None, None, target_acceleration)
-
         # Simulate dynamics
         q_ddot = np.matmul(np.linalg.inv(M), -(np.matmul(C, self.q_dot.reshape(-1, 1)) + G) + joint_torque).reshape(-1)
+        # import pdb; pdb.set_trace()
         self.q_dot = self.q_dot + q_ddot * self.dt
         self.q = self.q + self.q_dot * self.dt
         self.update_frame()
