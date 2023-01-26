@@ -143,7 +143,7 @@ class Trajectory:
 
 class LinearTrajectory(Trajectory):
 
-    def __init__(self):
+    def __init__(self, start_pos, end_pos, total_time):
         """
         Remember to call the constructor of Trajectory
 
@@ -151,8 +151,12 @@ class LinearTrajectory(Trajectory):
         ----------
         ????? You're going to have to fill these in how you see fit
         """
-        pass
-        # Trajectory.__init__(self, ...)
+        # pass
+        Trajectory.__init__(self, ...)
+        self.start_pos = np.array(start_pos)
+        self.end_pos = np.array(end_pos)
+        self.total_time = total_time
+        
 
     def target_pose(self, time):
         """
@@ -174,7 +178,7 @@ class LinearTrajectory(Trajectory):
         7x' :obj:`numpy.ndarray`
             desired configuration in workspace coordinates of the end effector
         """
-        pass
+        return self.start_pos + (self.end_pos - self.start_pos)/self.total_time * time
 
     def target_velocity(self, time):
         """
@@ -191,7 +195,7 @@ class LinearTrajectory(Trajectory):
         6x' :obj:`numpy.ndarray`
             desired body-frame velocity of the end effector
         """
-        pass
+        return (self.end_pos - self.start_pos)/self.total_time
 
 class CircularTrajectory(Trajectory):
 
@@ -204,7 +208,10 @@ class CircularTrajectory(Trajectory):
         ????? You're going to have to fill these in how you see fit
         """
         pass
-        # Trajectory.__init__(self, ...)
+        Trajectory.__init__(self, total_time)
+
+        self.center_position = np.array(center_position)
+        self.radius = radius
 
     def target_pose(self, time):
         """
@@ -226,7 +233,22 @@ class CircularTrajectory(Trajectory):
         7x' :obj:`numpy.ndarray`
             desired configuration in workspace coordinates of the end effector
         """
-        pass
+        middle = self.total_time/2
+        if time < middle:
+            theta = (time**2)/2
+        else:
+            theta = np.pi + 0.5*(-time**2 + middle**2) + 2*np.sqrt(2*np.pi)*(time - middle)
+
+
+        return np.array([
+            self.radius*np.cos(theta) + self.center_position[0],
+            self.radius*np.sin(theta) + self.center_position[1],
+            0,
+            0,
+            1,
+            0,
+            0
+        ])
 
     def target_velocity(self, time):
         """
@@ -243,7 +265,26 @@ class CircularTrajectory(Trajectory):
         6x' :obj:`numpy.ndarray`
             desired body-frame velocity of the end effector
         """
-        pass
+        middle = self.total_time/2
+        if time < middle:
+            theta = (time**2)/2
+            x_vel = -self.radius*np.sin(theta)*(time)
+            y_vel = self.radius*np.cos(theta)*time
+        else:
+            theta = np.pi + 0.5*(-time**2 + middle**2) + 2*np.sqrt(2*np.pi)*(time - middle)
+            x_vel = -self.radius*np.sin(theta)*(-time + 2*np.sqrt(2*np.pi))
+            y_vel = self.radius*np.cos(theta)*(-time + 2*np.sqrt(2*np.pi))
+
+
+        return np.array([
+            x_vel,
+            y_vel,
+            0,
+            0,
+            0,
+            0
+        ])
+
 
 class PolygonalTrajectory(Trajectory):
     def __init__(self, points, total_time):
