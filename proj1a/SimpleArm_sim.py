@@ -269,15 +269,14 @@ if __name__ == "__main__":
     parser.add_argument('-controller_name', '-c', type=str, default='jointspace', 
         help='Options: jointspace, workspace, or torque.  Default: jointspace'
     )
-    parser.add_argument('--start_pose', '-s', type=str, default='0,3,0,0,1,0,0')
-    parser.add_argument('--end_pose', '-e', type=str, default='0,7,0,0,1,0,0')
+    parser.add_argument('--start_pose', '-s', type=str, default='-8,6,0,0,1,0,0')
+    parser.add_argument('--end_pose', '-e', type=str, default='5,12,0,0,1,0,0')
     parser.add_argument('--total_time', '-tt', type=float, default='5.0')
 
     parser.add_argument('--center_pos', '-cp', type=str, default='6,6,0,0,1,0,0')
     parser.add_argument('--radius', '-r', type=float, default='3.0')
 
-
-    parser.add_argument('--points', '-p', type=str, default='-6,-6,0,0,1,0,0 6,-6,0,0,1,0,0 6,6,0,0,1,0,0 -6,6,0,0,1,0,0')
+    parser.add_argument('--points', '-p', type=str, default='2,2,0,0,1,0,0 2,4,0,0,1,0,0 4,4,0,0,1,0,0 4,2,0,0,1,0,0')
 
     args = parser.parse_args()
 

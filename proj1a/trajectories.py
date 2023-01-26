@@ -198,7 +198,8 @@ class LinearTrajectory(Trajectory):
         6x' :obj:`numpy.ndarray`
             desired body-frame velocity of the end effector
         """
-        return (self.end_pose - self.start_pose)/self.total_time
+        delta_t = 0.01
+        return (self.target_pose(time) - self.target_pose(time-delta_t))/delta_t
 
 class CircularTrajectory(Trajectory):
 
@@ -335,7 +336,8 @@ class PolygonalTrajectory(Trajectory):
         6x' :obj:`numpy.ndarray`
             desired body-frame velocity of the end effector
         """
-        pass
+        index = int(time // (self.total_time/len(self.lines)))
+        return self.lines[index].target_velocity(time % (self.total_time/len(self.lines)))
 
 def define_trajectories(args):
     """ Define each type of trajectory with the appropriate parameters."""
