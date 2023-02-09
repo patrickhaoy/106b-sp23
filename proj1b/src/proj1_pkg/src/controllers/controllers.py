@@ -582,9 +582,9 @@ class PDJointTorqueController(Controller):
 
         current_position = get_joint_positions(self._limb)
         current_velocity = get_joint_velocities(self._limb)
-        position_error = target_position - current_position
+        position_error = -(target_position - current_position)
         position_error = position_error.reshape((7,1))
-        velocity_error = target_velocity - current_velocity
+        velocity_error = -(target_velocity - current_velocity)
         velocity_error = velocity_error.reshape((7,1))
         print(f"POSITION ERROR: {position_error.shape}")
         print(f"VELOCITY ERROR: {velocity_error.shape}")
@@ -593,12 +593,15 @@ class PDJointTorqueController(Controller):
         # target_vel_dict = joint_array_to_dict(target_velocity, self._limb)
         I = self._kin.inertia(pos_dict)
         C = self._kin.coriolis(pos_dict, vel_dict)
-        G = self._kin.gravity(pos_dict) * 0.01
+        G = self._kin.gravity(pos_dict) *0.001#* (10**-5) * 0
         # import pdb; pdb.set_trace()
-        # control_input = I@(target_acceleration.reshape(-1, 1)) + G #np.zeros((7,)) #(I@(target_acceleration.reshape(-1, 1)))[::-1] #I@(target_acceleration.reshape(-1, 1)) + C + G + I@(- self.Kv@velocity_error - self.Kp@position_error)
-        control_input = np.zeros((7,))
+        #M*target_acceleration:
+        #C*target_velocity:
+        #G: 
+        control_input = I@(target_acceleration.reshape(-1, 1)) + C + G - self.Kp@position_error - self.Kv@velocity_error
+        # control_input = np.zeros((7,))
         print(control_input)
         torques = joint_array_to_dict(control_input, self._limb)
         # import pdb; pdb.set_trace()
-        self._limb.set_joint_velocities(torques)
+        print('torques:', torques)
         self._limb.set_joint_torques(torques)

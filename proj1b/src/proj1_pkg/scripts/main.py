@@ -108,7 +108,7 @@ def get_trajectory(limb, kin, ik_solver, tag_pos, args):
         current_ar_tag_position = np.array([getattr(ar_tag_trans.transform.translation, dim) for dim in ('x', 'y', 'z')])
         end_pose = np.concatenate((current_ar_tag_position, [0, 1, 0, 0]))
         end_pose[2] = 0.15
-        trajectory = CircularTrajectory(end_pose, 0.2, 5)
+        trajectory = CircularTrajectory(end_pose, 0.2, 10)
     elif task == 'polygon':
         trajectory = PolygonalTrajectory()
     else:
@@ -145,8 +145,16 @@ def get_controller(controller_name, limb, kin):
         controller = PDJointVelocityController(limb, kin, Kp, Kv)
     elif controller_name == 'torque':
         # YOUR CODE HERE
-        Kp = 1*np.zeros(7)
-        Kv = np.zeros(7)
+        Kp = np.array([
+            100,
+            100,
+            500,
+            100,
+            100,
+            100,
+            500,
+        ])
+        Kv = 5 * np.ones((7,))
         controller = PDJointTorqueController(limb, kin, Kp, Kv)
     elif controller_name == 'open_loop':
         controller = FeedforwardJointVelocityController(limb, kin)
