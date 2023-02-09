@@ -368,6 +368,7 @@ class Controller:
                 target_velocities.append(target_velocity)
 
             # Run controller
+            # print(t, current_index)
             self.step_control(target_position, target_velocity, target_acceleration)
 
             # Sleep for a bit (to let robot move)
@@ -529,8 +530,8 @@ class PDJointVelocityController(Controller):
         position_error = position_error.reshape((7,1))
         velocity_error = target_velocity - current_velocity
         velocity_error = velocity_error.reshape((7,1))
-        print(f"POSITION ERROR: {position_error.shape}")
-        print(f"VELOCITY ERROR: {velocity_error.shape}")
+        # print(f"POSITION ERROR: {position_error.shape}")
+        # print(f"VELOCITY ERROR: {velocity_error.shape}")
         pos_dict = joint_array_to_dict(current_position, self._limb)
         vel_dict = joint_array_to_dict(current_velocity, self._limb)
         # target_vel_dict = joint_array_to_dict(target_velocity, self._limb)
@@ -586,8 +587,8 @@ class PDJointTorqueController(Controller):
         position_error = position_error.reshape((7,1))
         velocity_error = -(target_velocity - current_velocity)
         velocity_error = velocity_error.reshape((7,1))
-        print(f"POSITION ERROR: {position_error.shape}")
-        print(f"VELOCITY ERROR: {velocity_error.shape}")
+        # print(f"POSITION ERROR: {position_error.shape}")
+        # print(f"VELOCITY ERROR: {velocity_error.shape}")
         pos_dict = joint_array_to_dict(current_position, self._limb)
         vel_dict = joint_array_to_dict(current_velocity, self._limb)
         # target_vel_dict = joint_array_to_dict(target_velocity, self._limb)
@@ -600,8 +601,8 @@ class PDJointTorqueController(Controller):
         #G: 
         control_input = I@(target_acceleration.reshape(-1, 1)) + C + G - self.Kp@position_error - self.Kv@velocity_error
         # control_input = np.zeros((7,))
-        print(control_input)
+        # print(control_input)
         torques = joint_array_to_dict(control_input, self._limb)
         # import pdb; pdb.set_trace()
-        print('torques:', torques)
+        # print('torques:', torques)
         self._limb.set_joint_torques(torques)

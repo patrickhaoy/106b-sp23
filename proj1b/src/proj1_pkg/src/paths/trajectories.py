@@ -199,7 +199,9 @@ class LinearTrajectory(Trajectory):
             desired body-frame velocity of the end effector
         """
         delta_t = 0.01
-        return (self.target_pose(time) - self.target_pose(time-delta_t))/delta_t
+        target_velocity = (self.target_pose(time) - self.target_pose(time-delta_t))/delta_t
+        target_velocity = np.concatenate((target_velocity[:3], [0, 0, 0]))
+        return target_velocity 
 
 class CircularTrajectory(Trajectory):
 
@@ -318,9 +320,11 @@ class PolygonalTrajectory(Trajectory):
         7x' :obj:`numpy.ndarray`
             desired configuration in workspace coordinates of the end effector
         """
-        index = int(time // (self.total_time/len(self.lines)))
-        return self.lines[index].target_pose(time % (self.total_time/len(self.lines)))
-        
+        index = int(time // (self.total_time/len(self.lines) + 1E-4))
+        target_pose = self.lines[index].target_pose(time % (self.total_time/len(self.lines)))
+        return target_pose
+
+
     def target_velocity(self, time):
         """
         Returns the end effector's desired body-frame velocity at time t as a 6D
@@ -336,8 +340,9 @@ class PolygonalTrajectory(Trajectory):
         6x' :obj:`numpy.ndarray`
             desired body-frame velocity of the end effector
         """
-        index = int(time // (self.total_time/len(self.lines)))
-        return self.lines[index].target_velocity(time % (self.total_time/len(self.lines)))
+        index = int(time // (self.total_time/len(self.lines) + 1E-4))
+        target_velocity = self.lines[index].target_velocity(time % (self.total_time/len(self.lines)))
+        return target_velocity
 
 def define_trajectories(args):
     """ Define each type of trajectory with the appropriate parameters."""

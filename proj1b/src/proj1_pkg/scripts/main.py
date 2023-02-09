@@ -110,7 +110,15 @@ def get_trajectory(limb, kin, ik_solver, tag_pos, args):
         end_pose[2] = 0.15
         trajectory = CircularTrajectory(end_pose, 0.2, 10)
     elif task == 'polygon':
-        trajectory = PolygonalTrajectory()
+        marker_list = ['ar_marker_0', 'ar_marker_15']
+        points = []
+        for tag in marker_list:
+            ar_tag_trans = tfBuffer.lookup_transform('base', tag, rospy.Time(0), rospy.Duration(5.0))
+            current_ar_tag_position = np.array([getattr(ar_tag_trans.transform.translation, dim) for dim in ('x', 'y', 'z')])
+            end_pose = np.concatenate((current_ar_tag_position, [0, 1, 0, 0]))
+            end_pose[2] = 0.2
+            points.append(end_pose)
+        trajectory = PolygonalTrajectory(points, 8)
     else:
         raise ValueError('task {} not recognized'.format(task))
     path = MotionPath(limb, kin, ik_solver, trajectory)
@@ -130,7 +138,14 @@ def get_controller(controller_name, limb, kin):
     """
     if controller_name == 'workspace':
         # YOUR CODE HERE
-        Kp = .7*np.zeros(6)
+        Kp = np.array([
+            0,
+            0,
+            0.1,
+            0,
+            0,
+            0,
+        ])
         Kv = np.zeros(6)
         controller = WorkspaceVelocityController(limb, kin, Kp, Kv)
     elif controller_name == 'jointspace':
@@ -222,14 +237,15 @@ def main():
     # of the trajectory
     planner = PathPlanner('right_arm')
     if args.controller_name == "workspace":
-        pose = create_pose_stamped_from_pos_quat(
-            robot_trajectory.joint_trajectory.points[0].positions,
-            [0, 1, 0, 0],
-            'base'
-        )
+        # pose = create_pose_stamped_from_pos_quat(
+        #     robot_trajectory.joint_trajectory.points[0].positions,
+        #     [0, 1, 0, 0],
+        #     'base'
+        # )
         
-        plan = planner.plan_to_pose(pose)
-        planner.execute_plan(plan[1])
+        # plan = planner.plan_to_pose(pose)
+        # planner.execute_plan(plan[1])
+        pass
     else:
         start = robot_trajectory.joint_trajectory.points[0].positions
         print("START:", robot_trajectory.joint_trajectory.points[0].positions)
