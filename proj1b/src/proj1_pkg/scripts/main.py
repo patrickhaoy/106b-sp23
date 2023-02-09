@@ -130,8 +130,8 @@ def get_controller(controller_name, limb, kin):
     """
     if controller_name == 'workspace':
         # YOUR CODE HERE
-        Kp = None
-        Kv = None
+        Kp = .7*np.zeros(6)
+        Kv = np.zeros(6)
         controller = WorkspaceVelocityController(limb, kin, Kp, Kv)
     elif controller_name == 'jointspace':
         # YOUR CODE HERE
@@ -219,6 +219,7 @@ def main():
             [0, 1, 0, 0],
             'base'
         )
+        
         plan = planner.plan_to_pose(pose)
         planner.execute_plan(plan[1])
     else:

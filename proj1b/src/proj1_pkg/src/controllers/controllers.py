@@ -466,8 +466,20 @@ class WorkspaceVelocityController(Controller):
         target_velocity: (6,) ndarray of desired body-frame se(3) velocity (vx, vy, vz, wx, wy, wz).
         target_acceleration: ndarray of desired accelerations (should you need this?).
         """
-        raise NotImplementedError
-        control_input = None        
+        current_position = get_joint_positions(self._limb)
+        g_sd = get_g_matrix(target_position[:3], target_position[3:])
+        g_st = get_g_matrix(current_position[:3], current_position[3:])
+        g_td = np.linalg.inv(g_st)@g_sd
+        # twist_td = twist_from_tf(g_td)
+        p, w = g_td[0:3, 3], np.array([[g_td[2][1]], [g_td[0][2]], [g_td[1][0]]])
+        norm_w = length(w)
+        
+        A_inv = np.eye(3) - 1/2*hat(w) + (2*np.sin(norm_w) - norm_w*(1+np.cos(norm_w)))/(2*(norm_w**2)*np.sin(norm_w))*(hat(w)@hat(w))
+        # import pdb; pdb.set_trace()
+        xi_td = np.concatenate((w, (A_inv@p).astype('float').reshape(-1,1)))
+        xi_td_s = adj(g_st)@xi_td
+        U_s = self.Kp@xi_td_s + target_velocity.reshape(-1,1)
+        control_input = self._kin.jacobian_pseudo_inverse()@U_s
         self._limb.set_joint_velocities(joint_array_to_dict(control_input, self._limb))
 
 
@@ -522,11 +534,10 @@ class PDJointVelocityController(Controller):
         pos_dict = joint_array_to_dict(current_position, self._limb)
         vel_dict = joint_array_to_dict(current_velocity, self._limb)
         # target_vel_dict = joint_array_to_dict(target_velocity, self._limb)
-        I = self._kin.inertia(pos_dict)
-        C = self._kin.coriolis(pos_dict, vel_dict)
-        G = self._kin.gravity(pos_dict)
+        # I = self._kin.inertia(pos_dict)
+        # C = self._kin.coriolis(pos_dict, vel_dict)
+        # G = self._kin.gravity(pos_dict)
         control_input = target_velocity.reshape(-1, 1) - self.Kv@velocity_error - self.Kp@position_error
-        import pdb; pdb.set_trace()
         self._limb.set_joint_velocities(joint_array_to_dict(control_input, self._limb))
 
 class PDJointTorqueController(Controller):
