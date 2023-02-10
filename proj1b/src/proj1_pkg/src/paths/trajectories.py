@@ -201,6 +201,8 @@ class LinearTrajectory(Trajectory):
         delta_t = 0.01
         target_velocity = (self.target_pose(time) - self.target_pose(time-delta_t))/delta_t
         target_velocity = np.concatenate((target_velocity[:3], [0, 0, 0]))
+        # if np.linalg.norm(target_velocity) > 20:
+        #     import pdb; pdb.set_trace()
         return target_velocity 
 
 class CircularTrajectory(Trajectory):
@@ -265,14 +267,27 @@ class CircularTrajectory(Trajectory):
             desired body-frame velocity of the end effector
         """
         middle = self.total_time/2
-        if time < middle:
-            theta = (time**2)/2
-            x_vel = -self.radius*np.sin(theta)*(time)
-            y_vel = self.radius*np.cos(theta)*time
+        T = self.total_time
+        # if time < middle:
+        #     theta = (time**2)/2
+        #     x_vel = -self.radius*np.sin(theta)*(time)
+        #     y_vel = self.radius*np.cos(theta)*time
+        # else:
+        #     theta = np.pi + 0.5*(-time**2 + middle**2) + 2*np.sqrt(2*np.pi)*(time - middle)
+        #     x_vel = -self.radius*np.sin(theta)*(-time + 2*np.sqrt(2*np.pi))
+        #     y_vel = self.radius*np.cos(theta)*(-time + 2*np.sqrt(2*np.pi))
+
+        t = time
+        if t < middle:
+            theta = 1/2 * (t**2) * (8*np.pi/(T**2))
+            theta_dot = (8*np.pi*t)/(T**2)
         else:
-            theta = np.pi + 0.5*(-time**2 + middle**2) + 2*np.sqrt(2*np.pi)*(time - middle)
-            x_vel = -self.radius*np.sin(theta)*(-time + 2*np.sqrt(2*np.pi))
-            y_vel = self.radius*np.cos(theta)*(-time + 2*np.sqrt(2*np.pi))
+            theta = -1/2 * (t**2) * (8*np.pi/(T**2)) + 8*np.pi*t/T - 2*np.pi
+            theta_dot = -(8*np.pi*t)/(T**2) + 8*np.pi/T
+        # theta = t / T * np.pi * 2
+        # theta_dot = 2 * np.pi / T
+        x_vel = -self.radius*np.sin(theta)*(theta_dot)
+        y_vel = self.radius*np.cos(theta)*theta_dot
 
 
         return np.array([
@@ -321,7 +336,7 @@ class PolygonalTrajectory(Trajectory):
             desired configuration in workspace coordinates of the end effector
         """
         index = int(time // (self.total_time/len(self.lines) + 1E-4))
-        target_pose = self.lines[index].target_pose(time % (self.total_time/len(self.lines)))
+        target_pose = self.lines[index].target_pose(time - index*self.total_time/len(self.lines))
         return target_pose
 
 
@@ -341,7 +356,7 @@ class PolygonalTrajectory(Trajectory):
             desired body-frame velocity of the end effector
         """
         index = int(time // (self.total_time/len(self.lines) + 1E-4))
-        target_velocity = self.lines[index].target_velocity(time % (self.total_time/len(self.lines)))
+        target_velocity = self.lines[index].target_velocity(time - index*self.total_time/len(self.lines))
         return target_velocity
 
 def define_trajectories(args):

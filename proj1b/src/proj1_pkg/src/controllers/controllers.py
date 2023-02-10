@@ -472,10 +472,14 @@ class WorkspaceVelocityController(Controller):
         g_st = get_g_matrix(current_position[:3], current_position[3:])
         g_td = np.linalg.inv(g_st)@g_sd
         # twist_td = twist_from_tf(g_td)
-        p, w = g_td[0:3, 3], np.array([[g_td[2][1]], [g_td[0][2]], [g_td[1][0]]])
-        norm_w = length(w)
+        R, p = g_td[0:3, 0:3], g_td[0:3, 3]
+        theta = np.arccos((np.trace(R) - 1)/2)
+        w_hat = (1/(2*np.sin(theta)))*(R - R.T)
         
-        A_inv = np.eye(3) - 1/2*hat(w) + (2*np.sin(norm_w) - norm_w*(1+np.cos(norm_w)))/(2*(norm_w**2)*np.sin(norm_w))*(hat(w)@hat(w))
+        w = np.array([[w_hat[2][1]], [w_hat[0][2]], [w_hat[1][0]]])
+        norm_w = length(w)
+
+        A_inv = np.eye(3) - 1/2*w_hat + (2*np.sin(norm_w) - norm_w*(1+np.cos(norm_w)))/(2*(norm_w**2)*np.sin(norm_w))*(w_hat@w_hat)
         # import pdb; pdb.set_trace()
         xi_td = np.concatenate((w, (A_inv@p).astype('float').reshape(-1,1)))
         xi_td_s = adj(g_st)@xi_td

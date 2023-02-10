@@ -6,6 +6,6 @@ roslaunch proj1_pkg sawyer_webcam_track.launch
 ./intera.sh alan.local
 rosrun intera_interface enable_robot.py -e
 
-roslaunch intera_interface sawyer_tuck.launch
+roslaunch intera_examples sawyer_tuck.launch
 
 python scripts/main.py -t line -ar 0 -c workspace --log

@@ -9,6 +9,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from mpl_toolkits.mplot3d import Axes3D
+import copy
 
 from utils.utils import *
 
@@ -61,6 +62,13 @@ class MotionPath:
         extra_point.time_from_start = rospy.Duration.from_sec(self.trajectory.total_time + 1)
         points.append(extra_point)
 
+        # print("BEFORE: ", np.max([np.linalg.norm(points[i].velocities) for i in range(300)]))
+        # for i in range(1, len(points)):
+        #     if np.linalg.norm(points[i].velocities) > 20:
+        #         # import pdb; pdb.set_trace()
+        #         points[i] = copy.copy(points[i-1])
+        # print("AFTER: ", np.max([np.linalg.norm(points[i].velocities) for i in range(300)]))
+
         traj.points = points
         traj.header.frame_id = 'base'
         robot_traj = RobotTrajectory()
@@ -105,6 +113,8 @@ class MotionPath:
             # the path, why do you think we're doing that here?
             point.positions = theta_t
             point.velocities = (theta_t - theta_t_1) / delta_t
+            # if np.linalg.norm(point.velocities) > 20:
+            #     import pdb; pdb.set_trace()
             point.accelerations = (theta_t - 2*theta_t_1 + theta_t_2) / (delta_t**2)
             self.previous_computed_ik = theta_t
         else:

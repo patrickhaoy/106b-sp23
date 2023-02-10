@@ -139,12 +139,12 @@ def get_controller(controller_name, limb, kin):
     if controller_name == 'workspace':
         # YOUR CODE HERE
         Kp = np.array([
-            0,
-            0,
-            0.1,
-            0,
-            0,
-            0,
+            0.00,
+            0.00,
+            0.01,
+            0.,
+            0.,
+            0.,
         ])
         Kv = np.zeros(6)
         controller = WorkspaceVelocityController(limb, kin, Kp, Kv)
@@ -161,15 +161,15 @@ def get_controller(controller_name, limb, kin):
     elif controller_name == 'torque':
         # YOUR CODE HERE
         Kp = np.array([
+            50,
+            50,
             100,
-            100,
-            500,
-            100,
-            100,
-            100,
-            500,
-        ])
-        Kv = 5 * np.ones((7,))
+            50,
+            50,
+            50,
+            50,
+        ]) * 1.5
+        Kv = 1 * np.ones((7,))
         controller = PDJointTorqueController(limb, kin, Kp, Kv)
     elif controller_name == 'open_loop':
         controller = FeedforwardJointVelocityController(limb, kin)
@@ -237,15 +237,15 @@ def main():
     # of the trajectory
     planner = PathPlanner('right_arm')
     if args.controller_name == "workspace":
-        # pose = create_pose_stamped_from_pos_quat(
-        #     robot_trajectory.joint_trajectory.points[0].positions,
-        #     [0, 1, 0, 0],
-        #     'base'
-        # )
+        pose = create_pose_stamped_from_pos_quat(
+            robot_trajectory.joint_trajectory.points[0].positions,
+            [0, 1, 0, 0],
+            'base'
+        )
         
-        # plan = planner.plan_to_pose(pose)
-        # planner.execute_plan(plan[1])
-        pass
+        plan = planner.plan_to_pose(pose)
+        planner.execute_plan(plan[1])
+        # pass
     else:
         start = robot_trajectory.joint_trajectory.points[0].positions
         print("START:", robot_trajectory.joint_trajectory.points[0].positions)
