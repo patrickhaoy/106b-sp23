@@ -105,17 +105,23 @@ class MotionPath:
         if jointspace:
             x_t, x_t_1, x_t_2 = None, None, None
             ik_attempts = 0
-            theta_t_2 = self.get_ik(self.trajectory.target_pose(t-2*delta_t), seed=self.previous_computed_ik)
-            theta_t_1 = self.get_ik(self.trajectory.target_pose(t-delta_t), seed=self.previous_computed_ik)
-            theta_t   = self.get_ik(self.trajectory.target_pose(t), seed=self.previous_computed_ik)
-            # import pdb; pdb.set_trace()
-            # we said you shouldn't simply take a finite difference when creating
-            # the path, why do you think we're doing that here?
-            point.positions = theta_t
-            point.velocities = (theta_t - theta_t_1) / delta_t
-            # if np.linalg.norm(point.velocities) > 20:
-            #     import pdb; pdb.set_trace()
-            point.accelerations = (theta_t - 2*theta_t_1 + theta_t_2) / (delta_t**2)
+            min_velocity_norm = float('inf')
+            for try_n in range(5):
+                theta_t_2 = self.get_ik(self.trajectory.target_pose(t-2*delta_t), seed=self.previous_computed_ik)
+                theta_t_1 = self.get_ik(self.trajectory.target_pose(t-delta_t), seed=self.previous_computed_ik)
+                theta_t   = self.get_ik(self.trajectory.target_pose(t), seed=self.previous_computed_ik)
+                
+                velocity_norm = np.linalg.norm((theta_t - theta_t_1) / delta_t)
+                if velocity_norm < min_velocity_norm:
+                    min_velocity_norm = velocity_norm
+                    # import pdb; pdb.set_trace()
+                    # we said you shouldn't simply take a finite difference when creating
+                    # the path, why do you think we're doing that here?
+                    point.positions = theta_t
+                    point.velocities = (theta_t - theta_t_1) / delta_t
+                    # if np.linalg.norm(point.velocities) > 20:
+                    #     import pdb; pdb.set_trace()
+                    point.accelerations = (theta_t - 2*theta_t_1 + theta_t_2) / (delta_t**2)
             self.previous_computed_ik = theta_t
         else:
             point.positions = self.trajectory.target_pose(t)
