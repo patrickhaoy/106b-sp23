@@ -62,7 +62,7 @@ def lookup_tag(tag_number):
     tag_pos = [getattr(trans.transform.translation, dim) for dim in ('x', 'y', 'z')]
     return np.array(tag_pos)
 
-def get_trajectory(limb, kin, ik_solver, tag_pos, args):
+def get_trajectory(limb, kin, ik_solver, tag_pos, args, return_jointspace_traj=False):
     """
     Returns an appropriate robot trajectory for the specified task.  You should 
     be implementing the path functions in paths.py and call them here
@@ -110,7 +110,7 @@ def get_trajectory(limb, kin, ik_solver, tag_pos, args):
         end_pose[2] = 0.15
         trajectory = CircularTrajectory(end_pose, 0.2, 10)
     elif task == 'polygon':
-        marker_list = ['ar_marker_0', 'ar_marker_15']
+        marker_list = ['ar_marker_0', 'ar_marker_15', 'ar_marker_16']
         points = []
         for tag in marker_list:
             ar_tag_trans = tfBuffer.lookup_transform('base', tag, rospy.Time(0), rospy.Duration(5.0))
@@ -122,7 +122,10 @@ def get_trajectory(limb, kin, ik_solver, tag_pos, args):
     else:
         raise ValueError('task {} not recognized'.format(task))
     path = MotionPath(limb, kin, ik_solver, trajectory)
-    return path.to_robot_trajectory(num_way, controller_name!='workspace')
+    if return_jointspace_traj:
+        return path.to_robot_trajectory(num_way, controller_name!='workspace'), path.to_robot_trajectory(num_way, True) 
+    else:
+        return path.to_robot_trajectory(num_way, controller_name!='workspace')
 
 def get_controller(controller_name, limb, kin):
     """
@@ -139,9 +142,9 @@ def get_controller(controller_name, limb, kin):
     if controller_name == 'workspace':
         # YOUR CODE HERE
         Kp = np.array([
-            0.00,
-            0.00,
-            0.01,
+            0.004,
+            0.001,
+            0.,
             0.,
             0.,
             0.,
@@ -155,8 +158,8 @@ def get_controller(controller_name, limb, kin):
         #K_p = 0.56
         # Kp = np.array([0.7,0.7,0.56,0.7,0.7,0.7,0.7])
         # Kv = np.array([0,0,0.0109375,0,0,0,0])
-        Kp = .7*np.zeros(7)
-        Kv = np.zeros(7)
+        Kp = .005*np.ones(7)
+        Kv = 0.0005*np.ones(7)
         controller = PDJointVelocityController(limb, kin, Kp, Kv)
     elif controller_name == 'torque':
         # YOUR CODE HERE
@@ -231,20 +234,33 @@ def main():
     # positions and velocities are workspace positions and velocities.  If the controller
     # is a jointspace or torque controller, it should return a trajectory where the positions
     # and velocities are the positions and velocities of each joint.
-    robot_trajectory = get_trajectory(limb, kin, ik_solver, tag_pos, args)
+    robot_trajectory, robot_trajectory_jointspace = get_trajectory(limb, kin, ik_solver, tag_pos, args, return_jointspace_traj=True)
 
     # This is a wrapper around MoveIt! for you to use.  We use MoveIt! to go to the start position
     # of the trajectory
     planner = PathPlanner('right_arm')
     if args.controller_name == "workspace":
-        pose = create_pose_stamped_from_pos_quat(
-            robot_trajectory.joint_trajectory.points[0].positions,
-            [0, 1, 0, 0],
-            'base'
-        )
+        start = robot_trajectory_jointspace.joint_trajectory.points[0].positions
+        print("START:", robot_trajectory_jointspace.joint_trajectory.points[0].positions)
         
-        plan = planner.plan_to_pose(pose)
-        planner.execute_plan(plan[1])
+        while not rospy.is_shutdown():
+            try:
+                # limb.move_to_joint_positions(joint_array_to_dict(start, limb), timeout=7.0, threshold=0.0001) # ONLY FOR EMERGENCIES!!!
+                plan = planner.plan_to_joint_pos(start)
+                planner.execute_plan(plan[1])
+                break
+            except moveit_commander.exception.MoveItCommanderException as e:
+                print(e)
+                print("Failed planning, retrying...")
+
+        # pose = create_pose_stamped_from_pos_quat(
+        #     robot_trajectory.joint_trajectory.points[0].positions,
+        #     [0, 1, 0, 0],
+        #     'base'
+        # )
+        
+        # plan = planner.plan_to_pose(pose)
+        # planner.execute_plan(plan[1])
         # pass
     else:
         start = robot_trajectory.joint_trajectory.points[0].positions
