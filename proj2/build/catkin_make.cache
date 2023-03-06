@@ -1,0 +1,2 @@
+proj2_pkg:stdr_gui:stdr_launchers:stdr_msgs:stdr_parser:stdr_resources:stdr_robot:stdr_samples:stdr_server:stdr_simulator
+-DCATKIN_DEVEL_PREFIX=/home/cc/ee106b/sp23/class/ee106b-aba/Desktop/projects/proj2/devel -DCMAKE_INSTALL_PREFIX=/home/cc/ee106b/sp23/class/ee106b-aba/Desktop/projects/proj2/install -G Unix Makefiles
