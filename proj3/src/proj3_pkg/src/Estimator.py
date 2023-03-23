@@ -302,7 +302,7 @@ class KalmanFilter(Estimator):
         # TODO: Your implementation goes here!
         # You may define the A, C, Q, R, and P matrices below.
         self.A = np.eye(4)
-        self.B = np.array([
+        self.B = self.dt * np.array([
             [self.r / 2 * np.cos(self.phid), self.r / 2 * np.cos(self.phid)],
             [self.r / 2 * np.sin(self.phid), self.r / 2 * np.sin(self.phid)],
             [1, 0],
@@ -381,9 +381,17 @@ class ExtendedKalmanFilter(Estimator):
         self.landmark = (0.5, 0.5)
         # TODO: Your implementation goes here!
         # You may define the Q, R, and P matrices below.
-        self.Q = np.eye(5)
-        self.R = np.eye(2)
-        self.P = np.eye(5)
+        self.Q = np.eye(5)*0
+        # self.Q[1][1] = 1
+        # self.Q[1][2] = 0
+        # self.Q[2][2] = 1
+        # self.Q[2][1] = 0
+        self.R = np.eye(2) * 10
+        # self.R[0][0] = 100
+        # self.R[1][1] = 10
+        self.P = 0.1 * np.eye(5)
+        # self.P[1][1] = 2
+        # self.P[2][2] = 3
 
 
     # noinspection DuplicatedCode
@@ -411,27 +419,27 @@ class ExtendedKalmanFilter(Estimator):
                 [0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0]
             ])
-            A_tp1 = np.eye(5) + self.dt * df_dx
-            B_bar = self.dt * f
+            
+            
             # x_hat_tp1t = A_tp1 @ np.array(self.x_hat[-1][1:]) + B_bar @ np.array(self.u[-1][1:])
-            x_hat_tp1t = np.array(self.x_hat[-1][1:]) + self.dt*(f@np.array(self.u[-1][1:]))
+            x_hat_tp1t =  np.array(self.x_hat[-1][1:]) + self.dt*(f@np.array(self.u[-1][1:])) #state extrapolation using system dynamics
+            A_tp1 = np.eye(5) + self.dt * df_dx
+            # B_bar = self.dt * f
             
             P_tp1t = A_tp1 @ self.P @ A_tp1.T + self.Q
             xp = self.landmark[0]
             yp = self.landmark[1]
-            x = self.x_hat[-1][2]
-            y = self.x_hat[-1][3]
+            x = x_hat_tp1t[2]
+            y = x_hat_tp1t[3]
             C_tp1 = np.array([
                 [0, -np.sqrt((xp - x)**2 + (yp - y)**2)*(xp - x), -np.sqrt((xp - x)**2 + (yp - y)**2)*(yp - y), 0, 0],
                 [0, (1/(1 + ((yp - y)/(xp - x))**2))*((-yp -y)/(xp - x)**2), -1/(1 + ((yp - y)/(xp - x))**2), 0, 0]
             ])
-            # print(C_tp1)
-            # print(C_tp1.shape)
-            # assert False
+            
             K_tp1 = P_tp1t @ C_tp1.T @ np.linalg.inv(C_tp1 @ P_tp1t @ C_tp1.T + self.R)
 
             h = np.array([
-                [np.sqrt((self.landmark[0] - x_hat_tp1t[0])**2 - (self.landmark[1] - x_hat_tp1t[1])**2)],
+                [np.sqrt((self.landmark[0] - x_hat_tp1t[0])**2 + (self.landmark[1] - x_hat_tp1t[1])**2)],
                 [np.arctan((self.landmark[1] - x_hat_tp1t[1]) / (self.landmark[0] - x_hat_tp1t[0]))]
             ])
             
@@ -452,5 +460,6 @@ class ExtendedKalmanFilter(Estimator):
                 new_x_hat[3][0],
                 new_x_hat[4][0],
             ])
+            # import pdb; pdb.set_trace()
             self.x_hat.append(tuple(list(new_x_hat)))
-
+        # print("LENGTH ", len(self.x_hat), self.x_hat[-1])
