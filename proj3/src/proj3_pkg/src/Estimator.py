@@ -381,15 +381,15 @@ class ExtendedKalmanFilter(Estimator):
         self.landmark = (0.5, 0.5)
         # TODO: Your implementation goes here!
         # You may define the Q, R, and P matrices below.
-        self.Q = np.eye(5)*0
+        self.Q = 0.05 * np.eye(5)
         # self.Q[1][1] = 1
         # self.Q[1][2] = 0
-        # self.Q[2][2] = 1
+        self.Q[2][2] = 0.25
         # self.Q[2][1] = 0
-        self.R = np.eye(2) * 10
+        self.R = 1 * np.eye(2)
         # self.R[0][0] = 100
         # self.R[1][1] = 10
-        self.P = 0.1 * np.eye(5)
+        self.P = 0.05 * np.eye(5)
         # self.P[1][1] = 2
         # self.P[2][2] = 3
 
@@ -433,7 +433,7 @@ class ExtendedKalmanFilter(Estimator):
             y = x_hat_tp1t[3]
             C_tp1 = np.array([
                 [0, -np.sqrt((xp - x)**2 + (yp - y)**2)*(xp - x), -np.sqrt((xp - x)**2 + (yp - y)**2)*(yp - y), 0, 0],
-                [0, (1/(1 + ((yp - y)/(xp - x))**2))*((-yp -y)/(xp - x)**2), -1/(1 + ((yp - y)/(xp - x))**2), 0, 0]
+                [0, (1/(1 + ((yp - y)/(xp - x))**2))*((yp -y)/(xp - x)**2), 1/(1 + ((yp - y)/(xp - x))**2)*(-1/(xp-x)), 0, 0]
             ])
             
             K_tp1 = P_tp1t @ C_tp1.T @ np.linalg.inv(C_tp1 @ P_tp1t @ C_tp1.T + self.R)
