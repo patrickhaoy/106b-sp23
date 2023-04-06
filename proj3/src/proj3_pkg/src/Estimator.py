@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 plt.rcParams['font.family'] = ['FreeSans', 'Helvetica', 'Arial']
 plt.rcParams['font.size'] = 14
-
+import time
 
 class Estimator:
     """A base class to represent an estimator.
@@ -246,7 +246,11 @@ class DeadReckoning(Estimator):
         super().__init__()
         self.canvas_title = 'Dead Reckoning'
 
+        # self.update_times = []
+
     def update(self, _):
+        # start = time.time()
+
         if len(self.x_hat) > 0 and self.x_hat[-1][0] < self.x[-1][0]:
             # TODO: Your implementation goes here!
             # You may ONLY use self.u and self.x[0] for estimation
@@ -272,6 +276,15 @@ class DeadReckoning(Estimator):
             ])
             self.x_hat.append(tuple(list(new_x_hat)))
 
+        errs = []
+        for i in range(min(len(self.x), len(self.x_hat))):
+            err = np.sqrt((self.x_hat[i][2] - self.x[i][2]) ** 2 + (self.x_hat[i][3] - self.x[i][3]) ** 2)
+            errs.append(err)
+        if len(self.x) > 0:
+            print(sum(errs) / len(errs))
+
+        # self.update_times.append(time.time() - start)
+        # print(sum(self.update_times)/len(self.update_times))
 
 class KalmanFilter(Estimator):
     """Kalman filter estimator.
@@ -317,9 +330,13 @@ class KalmanFilter(Estimator):
         self.R = np.eye(2)
         self.P = np.eye(4)
 
+        # self.update_times = []
+
     # noinspection DuplicatedCode
     # noinspection PyPep8Naming
     def update(self, _):
+        # start = time.time()
+
         if len(self.x_hat) > 0 and self.x_hat[-1][0] < self.x[-1][0]:
             # TODO: Your implementation goes here!
             # You may use self.u, self.y, and self.x[0] for estimation
@@ -345,7 +362,15 @@ class KalmanFilter(Estimator):
             ])
             self.x_hat.append(tuple(list(new_x_hat)))
 
+        errs = []
+        for i in range(min(len(self.x), len(self.x_hat))):
+            err = np.sqrt((self.x_hat[i][2] - self.x[i][2]) ** 2 + (self.x_hat[i][3] - self.x[i][3]) ** 2)
+            errs.append(err)
+        if len(self.x) > 0:
+            print(sum(errs) / len(errs))
 
+        # self.update_times.append(time.time() - start)
+        # print(sum(self.update_times)/len(self.update_times))
 
 # noinspection PyPep8Naming
 class ExtendedKalmanFilter(Estimator):
@@ -381,6 +406,10 @@ class ExtendedKalmanFilter(Estimator):
         self.landmark = (0.5, 0.5)
         # TODO: Your implementation goes here!
         # You may define the Q, R, and P matrices below.
+        # self.Q = np.diag([5e-1, 5e-1, 5e-1, 1e-1, 1e-1])
+        # self.R = np.diag([5e-2, 1e-2])
+        # self.P = np.diag([1e-2, 1e2, 1e2, 1e2, 1e2])
+
         self.Q = 0.05 * np.eye(5)
         # self.Q[1][1] = 1
         # self.Q[1][2] = 0
@@ -393,9 +422,12 @@ class ExtendedKalmanFilter(Estimator):
         # self.P[1][1] = 2
         # self.P[2][2] = 3
 
+        # self.update_times = []
 
     # noinspection DuplicatedCode
     def update(self, _):
+        # start = time.time()
+
         if len(self.x_hat) > 0 and self.x_hat[-1][0] < self.x[-1][0]:
             # TODO: Your implementation goes here!
             # You may use self.u, self.y, and self.x[0] for estimation
@@ -463,3 +495,13 @@ class ExtendedKalmanFilter(Estimator):
             # import pdb; pdb.set_trace()
             self.x_hat.append(tuple(list(new_x_hat)))
         # print("LENGTH ", len(self.x_hat), self.x_hat[-1])
+
+        errs = []
+        for i in range(min(len(self.x), len(self.x_hat))):
+            err = np.sqrt((self.x_hat[i][2] - self.x[i][2]) ** 2 + (self.x_hat[i][3] - self.x[i][3]) ** 2)
+            errs.append(err)
+        if len(self.x) > 0:
+            print(sum(errs) / len(errs))
+
+        # self.update_times.append(time.time() - start)
+        # print(sum(self.update_times)/len(self.update_times))
